@@ -3320,6 +3320,8 @@ class Session(object):
                         self._lock.acquire()
                         return False
                     self._lock.acquire()
+                if previous:
+                    time.sleep(2)
                 self._pools[host] = new_pool
 
             log.debug("Added pool for host %s to session", host)

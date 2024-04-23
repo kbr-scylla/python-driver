@@ -1979,6 +1979,7 @@ class Cluster(object):
             futures_results = []
             callback = partial(self._on_up_future_completed, host, futures, futures_results, futures_lock)
             for session in tuple(self.sessions):
+                log.info("on_up add_or_renew_pool %s", host)
                 future = session.add_or_renew_pool(host, is_host_addition=False)
                 if future is not None:
                     have_future = True
@@ -2118,6 +2119,7 @@ class Cluster(object):
 
         have_future = False
         for session in tuple(self.sessions):
+            log.info("on_add add_or_renew_pool %s", host)
             future = session.add_or_renew_pool(host, is_host_addition=True)
             if future is not None:
                 have_future = True
@@ -2136,6 +2138,7 @@ class Cluster(object):
 
         # see if there are any pools to add or remove now that the host is marked up
         for session in tuple(self.sessions):
+            log.info("finalize_add update_created_pools %s", host)
             session.update_created_pools()
 
     def on_remove(self, host):
@@ -3320,9 +3323,11 @@ class Session(object):
                         self._lock.acquire()
                         return False
                     self._lock.acquire()
+                log.debug("before set new pool %s previous %s", host, bool(previous))
                 if previous:
                     time.sleep(2)
                 self._pools[host] = new_pool
+                log.debug("set new pool %s previous %s", host, bool(previous))
 
             log.debug("Added pool for host %s to session", host)
             if previous:
@@ -3362,6 +3367,7 @@ class Session(object):
                 # to allow us to attempt connections to hosts that have gone from ignored to something
                 # else.
                 if distance != HostDistance.IGNORED and host.is_up in (True, None):
+                    log.info("update_created_pools add_or_renew_pool %s", host)
                     future = self.add_or_renew_pool(host, False)
             elif distance != pool.host_distance:
                 # the distance has changed
